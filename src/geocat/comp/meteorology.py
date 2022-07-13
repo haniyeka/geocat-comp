@@ -393,6 +393,12 @@ def _relhum_water(t: typing.Union[np.ndarray, list, float],
     `relhum_ice <https://www.ncl.ucar.edu/Document/Functions/Built-in/relhum_ice.shtml>`_,
     `relhum_water <https://www.ncl.ucar.edu/Document/Functions/Built-in/relhum_water.shtml>`_
     """
+    xp = np
+    if(use_gpu):
+        xp = _import_cupy()
+        t = xp.asarray(t)
+        w = xp.asarray(w)
+        p = xp.asarray(p)
 
     # Define data variables
 

@@ -265,12 +265,12 @@ class Test_relhum_water(unittest.TestCase):
 
     rh_gt_1 = 46.3574
 
-    def test_float_input(self):
+    def test_float_input(self, use_gpu=False):
         p = 1000. * 100
         t = 18. + 273.15
         q = 6. / 1000.
 
-        assert np.allclose(relhum_water(t, q, p), self.rh_gt_1, atol=0.1)
+        assert np.allclose(relhum_water(t, q, p, use_gpu), self.rh_gt_1, atol=0.1)
 
 
 class Test_relhum_ice(unittest.TestCase):
