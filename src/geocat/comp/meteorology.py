@@ -7,9 +7,9 @@ from .comp_util import _import_cupy
 
 
 def _dewtemp(
-    tk: typing.Union[np.ndarray, xr.DataArray, list,
-                     float], rh: typing.Union[np.ndarray, xr.DataArray, list,
-                                              float]
+    tk: typing.Union[np.ndarray, xr.DataArray, list,float],
+    rh: typing.Union[np.ndarray, xr.DataArray, list,float],
+    use_gpu: bool = False
 ) -> typing.Union[np.ndarray, xr.DataArray, list, float]:
     """This function calculates the dew point temperature given temperature and
     relative humidity using equations from John Dutton's "Ceaseless Wind" (pp
@@ -48,9 +48,9 @@ def _dewtemp(
 
 
 def _heat_index(temperature: np.ndarray,
-                relative_humidity: typing.Union[np.ndarray, xr.DataArray, list,
-                                                float],
-                alternate_coeffs: bool = False) -> np.ndarray:
+                relative_humidity: typing.Union[np.ndarray, xr.DataArray, list,float],
+                alternate_coeffs: bool = False,
+                use_gpu: bool = False) -> np.ndarray:
     """Compute the 'heat index' as calculated by the National Weather Service.
 
     Internal function for heat_index
@@ -133,7 +133,7 @@ def _heat_index(temperature: np.ndarray,
     return heatindex
 
 
-def _nws_eqn(coeffs, temp, rel_hum):
+def _nws_eqn(coeffs, temp, rel_hum, use_gpu: bool = False):
     """Helper function to compute the heat index.
 
     Internal function for heat_index
@@ -281,7 +281,8 @@ def _relhum(
 
 def _relhum_ice(t: typing.Union[np.ndarray, list, float],
                 w: typing.Union[np.ndarray, list, float],
-                p: typing.Union[np.ndarray, list, float]) -> np.ndarray:
+                p: typing.Union[np.ndarray, list, float],
+                use_gpu: bool = False) -> np.ndarray:
     """Calculates relative humidity with respect to ice, given temperature,
     mixing ratio, and pressure.
 
@@ -322,6 +323,13 @@ def _relhum_ice(t: typing.Union[np.ndarray, list, float],
     `relhum_water <https://www.ncl.ucar.edu/Document/Functions/Built-in/relhum_water.shtml>`_
     """
 
+    xp = np
+    if(use_gpu):
+        xp = _import_cupy()
+        t = xp.asarray(t)
+        w = xp.asarray(w)
+        p = xp.asarray(p)
+        
     # Define data variables
 
     t0 = 273.15
@@ -341,7 +349,8 @@ def _relhum_ice(t: typing.Union[np.ndarray, list, float],
 
 def _relhum_water(t: typing.Union[np.ndarray, list, float],
                   w: typing.Union[np.ndarray, list, float],
-                  p: typing.Union[np.ndarray, list, float]) -> np.ndarray:
+                  p: typing.Union[np.ndarray, list, float],
+                  use_gpu: bool = False) -> np.ndarray:
     """Calculates relative humidity with respect to water, given temperature,
     mixing ratio, and pressure.
 
@@ -404,7 +413,8 @@ def _relhum_water(t: typing.Union[np.ndarray, list, float],
 
 def _xheat_index(temperature: xr.DataArray,
                  relative_humidity: xr.DataArray,
-                 alternate_coeffs: bool = False) -> tuple([xr.DataArray, int]):
+                 alternate_coeffs: bool = False,
+                 use_gpu: bool = False) -> tuple([xr.DataArray, int]):
     """Compute the 'heat index' as calculated by the National Weather Service.
 
     Internal function for heat_index for dask
@@ -594,7 +604,8 @@ def _xrelhum(t: xr.DataArray, w: xr.DataArray, p: xr.DataArray, use_gpu: bool=Fa
 
 def dewtemp(
     temperature: typing.Union[np.ndarray, xr.DataArray, list, float],
-    relative_humidity: typing.Union[np.ndarray, xr.DataArray, list, float]
+    relative_humidity: typing.Union[np.ndarray, xr.DataArray, list, float],
+    use_gpu: bool = False
 ) -> typing.Union[np.ndarray, float]:
     """This function calculates the dew point temperature given temperature and
     relative humidity using equations from John Dutton's "Ceaseless Wind" (pp
@@ -660,7 +671,8 @@ def dewtemp(
 def heat_index(
         temperature: typing.Union[np.ndarray, xr.DataArray, list, float],
         relative_humidity: typing.Union[np.ndarray, xr.DataArray, list, float],
-        alternate_coeffs: bool = False
+        alternate_coeffs: bool = False,
+        use_gpu: bool = False
 ) -> typing.Union[np.ndarray, xr.DataArray]:
     """Compute the 'heat index' as calculated by the National Weather Service.
 
@@ -870,7 +882,8 @@ def relhum(
 
 def relhum_ice(temperature: typing.Union[np.ndarray, list, float],
                mixing_ratio: typing.Union[np.ndarray, list, float],
-               pressure: typing.Union[np.ndarray, list, float]) -> np.ndarray:
+               pressure: typing.Union[np.ndarray, list, float],
+               use_gpu: bool = False) -> np.ndarray:
     """Calculates relative humidity with respect to ice, given temperature,
     mixing ratio, and pressure.
 
@@ -928,7 +941,7 @@ def relhum_ice(temperature: typing.Union[np.ndarray, list, float],
             temperature) != np.shape(pressure):
         raise ValueError(f"relhum_ice: dimensions of inputs are not the same")
 
-    relative_humidity = _relhum_ice(temperature, mixing_ratio, pressure)
+    relative_humidity = _relhum_ice(temperature, mixing_ratio, pressure, use_gpu)
 
     # output as xarray if input as xarray
     if x_out:
@@ -942,7 +955,8 @@ def relhum_ice(temperature: typing.Union[np.ndarray, list, float],
 
 def relhum_water(temperature: typing.Union[np.ndarray, list, float],
                  mixing_ratio: typing.Union[np.ndarray, list, float],
-                 pressure: typing.Union[np.ndarray, list, float]) -> np.ndarray:
+                 pressure: typing.Union[np.ndarray, list, float],
+                 use_gpu: bool = False) -> np.ndarray:
     """Calculates relative humidity with respect to water, given temperature,
     mixing ratio, and pressure.
 
@@ -1003,7 +1017,7 @@ def relhum_water(temperature: typing.Union[np.ndarray, list, float],
             temperature) != np.shape(pressure):
         raise ValueError(f"relhum_water: dimensions of inputs are not the same")
 
-    relative_humidity = _relhum_water(temperature, mixing_ratio, pressure)
+    relative_humidity = _relhum_water(temperature, mixing_ratio, pressure, use_gpu)
 
     # output as xarray if input as xarray
     if x_out:

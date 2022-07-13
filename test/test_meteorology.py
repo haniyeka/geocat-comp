@@ -8,10 +8,10 @@ import xarray as xr
 
 # Import from directory structure if coverage test, or from installed
 # packages otherwise
-if "--cov" in str(sys.argv):
-    from src.geocat.comp import dewtemp, heat_index, relhum, relhum_ice, relhum_water
-else:
-    from geocat.comp import dewtemp, heat_index, relhum, relhum_ice, relhum_water
+#if "--cov" in str(sys.argv):
+from src.geocat.comp import dewtemp, heat_index, relhum, relhum_ice, relhum_water
+#else:
+#    from geocat.comp import dewtemp, heat_index, relhum, relhum_ice, relhum_water
 
 
 class Test_dewtemp(unittest.TestCase):
@@ -277,10 +277,10 @@ class Test_relhum_ice(unittest.TestCase):
 
     rh_gt_1 = 147.8802
 
-    def test_float_input(self):
+    def test_float_input(self, use_gpu=False):
         tc = -5.
         tk = tc + 273.15
         w = 3.7 / 1000.
         p = 1000. * 100.
 
-        assert np.allclose(relhum_ice(tk, w, p), self.rh_gt_1, atol=0.1)
+        assert np.allclose(relhum_ice(tk, w, p, use_gpu), self.rh_gt_1, atol=0.1)
