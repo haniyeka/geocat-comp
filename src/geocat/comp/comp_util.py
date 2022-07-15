@@ -2,7 +2,8 @@ import numpy as np
 import xarray as xr
 import dask.array as da
 
-def _is_duck_array(value,xp):
+
+def _is_duck_array(value, xp):
     """Returns True when ``value`` is array-like."""
     if isinstance(value, xp.ndarray):
         return True
@@ -10,14 +11,16 @@ def _is_duck_array(value,xp):
             hasattr(value, "dtype") and hasattr(value, "__array_function__") and
             hasattr(value, "__array_ufunc__"))
 
+
 def _import_cupy():
-    """imports the cupy and checks if not installed"""
+    """imports the cupy and checks if not installed."""
     try:
         import cupy as cp
         return cp
     except ImportError as e:
         print(f"Cupy is not installed for GPU computation!")
         pass  # module doesn't exist, deal with it. """
+
 
 def _convert_to_gpu_array(inputs):
     xp = _import_cupy()
@@ -38,13 +41,15 @@ def _convert_to_gpu_array(inputs):
                 inputs_gpu.append(xr.DataArray(xp.asarray(item.data)))
         elif da.Array in in_types:
             for item in inputs:
-                inputs_gpu.append(xr.DataArray(item.data.map_blocks(xp.asarray)))
+                inputs_gpu.append(xr.DataArray(item.data.map_blocks(
+                    xp.asarray)))
     elif da.Array in in_types:
         for item in inputs:
             inputs_gpu.append(item.map_blocks(xp.asarray))
-    else: 
+    else:
         return inputs
     return inputs_gpu
+
 
 def _convert_to_cpu_array(inputs):
     cp = _import_cupy()
@@ -62,10 +67,11 @@ def _convert_to_cpu_array(inputs):
                 inputs_cpu.append(xr.DataArray(cp.asnumpy(item.data)))
         elif da.Array in in_types:
             for item in inputs:
-                inputs_cpu.append(xr.DataArray(item.data.map_blocks(cp.asnumpy)))
+                inputs_cpu.append(xr.DataArray(item.data.map_blocks(
+                    cp.asnumpy)))
     elif da.Array in in_types:
         for item in inputs:
             inputs_cpu.append(item.map_blocks(cp.asnumpy))
-    else: 
+    else:
         return inputs
     return inputs_cpu

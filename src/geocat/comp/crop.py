@@ -6,10 +6,9 @@ from .comp_util import _is_duck_array, _import_cupy, _convert_to_gpu_array, _con
 
 
 def max_daylight(
-    jday: typing.Union[np.ndarray, xr.DataArray, list,
-                       float], lat: typing.Union[np.ndarray, xr.DataArray, list,
-                                                 float], use_gpu = False
-) -> typing.Union[np.ndarray, xr.DataArray, float]:
+        jday: typing.Union[np.ndarray, xr.DataArray, list, float],
+        lat: typing.Union[np.ndarray, xr.DataArray, list, float],
+        use_gpu=False) -> typing.Union[np.ndarray, xr.DataArray, float]:
     """Computes maximum number of daylight hours as described in the Food and
     Agriculture Organization (FAO) Irrigation and Drainage Paper 56 entitled:
 
@@ -50,8 +49,8 @@ def max_daylight(
     """
 
     #importing cupy if the user defined use_gpu to true
-    xp = np 
-    if(use_gpu):
+    xp = np
+    if (use_gpu):
         xp = _import_cupy()
 
     x_out = False
@@ -79,7 +78,7 @@ def max_daylight(
             'WARNING: max_daylight: calculation not possible for abs(lat) > 66 for all values of jday, '
             'errors may occur')
     #lat and jday are used in the calculation so we convert them to gpu array
-    if(use_gpu):
+    if (use_gpu):
         jday, lat = _convert_to_gpu_array([jday, lat])
 
     # define constants
@@ -99,7 +98,7 @@ def max_daylight(
     dlm = xp.transpose(con * ws)
 
     #xarray doesn't accept cupy coordinates, so they need to convert back to cpu array
-    if(use_gpu):
+    if (use_gpu):
         jday, lat = _convert_to_cpu_array([jday, lat])
     # handle metadata if xarray output
     if x_out:
@@ -113,9 +112,8 @@ def max_daylight(
 
 
 def psychrometric_constant(
-    pressure: typing.Union[np.ndarray, xr.DataArray, list, float], 
-    use_gpu = False
-) -> typing.Union[np.ndarray, xr.DataArray]:
+        pressure: typing.Union[np.ndarray, xr.DataArray, list, float],
+        use_gpu=False) -> typing.Union[np.ndarray, xr.DataArray]:
     """Compute psychrometric constant [kPa / C] as described in the Food and
     Agriculture Organization (FAO) Irrigation and Drainage Paper 56 entitled:
 
@@ -161,7 +159,7 @@ def psychrometric_constant(
     `psychro_fao56 <https://www.ncl.ucar.edu/Document/Functions/Crop/psychro_fao56.shtml>`_
     """
     xp = np
-    if(use_gpu):
+    if (use_gpu):
         xp = _import_cupy()
         pressure = _convert_to_gpu_array([pressure])[0]
     # Constant
@@ -187,9 +185,9 @@ def psychrometric_constant(
 
 
 def saturation_vapor_pressure(
-    temperature: typing.Union[np.ndarray, xr.DataArray, list, float],
-    tfill: typing.Union[float] = np.nan, use_gpu = False
-) -> typing.Union[np.ndarray, xr.DataArray]:
+        temperature: typing.Union[np.ndarray, xr.DataArray, list, float],
+        tfill: typing.Union[float] = np.nan,
+        use_gpu=False) -> typing.Union[np.ndarray, xr.DataArray]:
     """Compute saturation vapor pressure as described in the Food and
     Agriculture Organization (FAO) Irrigation and Drainage Paper 56
     entitled:
@@ -237,7 +235,7 @@ def saturation_vapor_pressure(
     `satvpr_temp_fao56 <https://www.ncl.ucar.edu/Document/Functions/Crop/satvpr_temp_fao56.shtml>`_
     """
     xp = np
-    if(use_gpu):
+    if (use_gpu):
         xp = _import_cupy()
 
     in_type = type(temperature)
@@ -258,7 +256,7 @@ def saturation_vapor_pressure(
 
     else:
         temperature = np.asarray(temperature)
-        if(use_gpu):
+        if (use_gpu):
             temperature = _convert_to_gpu_array([temperature])[0]
 
         temp_c = (temperature - 32) * 5 / 9
@@ -269,9 +267,9 @@ def saturation_vapor_pressure(
 
 
 def actual_saturation_vapor_pressure(
-    tdew: typing.Union[np.ndarray, xr.DataArray, list, float],
-    tfill: typing.Union[float] = np.nan, use_gpu = False
-) -> typing.Union[np.ndarray, xr.DataArray]:
+        tdew: typing.Union[np.ndarray, xr.DataArray, list, float],
+        tfill: typing.Union[float] = np.nan,
+        use_gpu=False) -> typing.Union[np.ndarray, xr.DataArray]:
     """ Compute 'actual' saturation vapor pressure [kPa] as described in the
     Food and Agriculture Organization (FAO) Irrigation and Drainage Paper 56
     entitled:
@@ -318,7 +316,7 @@ def actual_saturation_vapor_pressure(
     """
     in_type = type(tdew)
 
-    asvp = saturation_vapor_pressure(tdew, tfill, use_gpu = use_gpu)
+    asvp = saturation_vapor_pressure(tdew, tfill, use_gpu=use_gpu)
 
     # reformat metadata for xarray
     if in_type is xr.DataArray:
@@ -331,9 +329,9 @@ def actual_saturation_vapor_pressure(
 
 
 def saturation_vapor_pressure_slope(
-    temperature: typing.Union[np.ndarray, xr.DataArray, list, float],
-    tfill: typing.Union[float] = np.nan, use_gpu = False
-) -> typing.Union[np.ndarray, xr.DataArray]:
+        temperature: typing.Union[np.ndarray, xr.DataArray, list, float],
+        tfill: typing.Union[float] = np.nan,
+        use_gpu=False) -> typing.Union[np.ndarray, xr.DataArray]:
     """Compute the slope [kPa/C] of saturation vapor pressure curve as
     described in the Food and Agriculture Organization (FAO) Irrigation and
     Drainage Paper 56 entitled:
@@ -374,7 +372,7 @@ def saturation_vapor_pressure_slope(
     `satvpr_temp_fao56 <https://www.ncl.ucar.edu/Document/Functions/Crop/satvpr_temp_fao56.shtml>`_
     """
     xp = np
-    if(use_gpu):
+    if (use_gpu):
         xp = _import_cupy()
 
     in_type = type(temperature)
@@ -399,7 +397,7 @@ def saturation_vapor_pressure_slope(
             'info'] = "FAO 56; EQN 13; saturation_vapor_pressure_slope"
 
     else:
-        if(use_gpu):
+        if (use_gpu):
             temperature = _convert_to_gpu_array([temperature])[0]
         temperature = xp.asarray(temperature)
 
