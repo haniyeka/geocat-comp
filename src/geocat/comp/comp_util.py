@@ -2,9 +2,9 @@ import numpy as np
 import xarray as xr
 import dask.array as da
 
-def _is_duck_array(value):
+def _is_duck_array(value,xp):
     """Returns True when ``value`` is array-like."""
-    if isinstance(value, np.ndarray):
+    if isinstance(value, xp.ndarray):
         return True
     return (hasattr(value, "ndim") and hasattr(value, "shape") and
             hasattr(value, "dtype") and hasattr(value, "__array_function__") and
@@ -18,41 +18,54 @@ def _import_cupy():
     except ImportError as e:
         print(f"Cupy is not installed for GPU computation!")
         pass  # module doesn't exist, deal with it. """
-    
+
 def _convert_to_gpu_array(inputs):
     xp = _import_cupy()
     inputs_gpu = []
     in_types = [type(item) for item in inputs]
     #convert the numpy to cupy
-    if np.ndarray in in_types:
-        for item in inputs: 
+
+    if xp.ndarray in in_types:
+        return inputs
+    elif np.ndarray in in_types:
+        for item in inputs:
             inputs_gpu.append(xp.asarray(item))
     #convert the xarray
     elif xr.DataArray in in_types:
         in_types = [type(item.data) for item in inputs]
         if np.ndarray in in_types:
-            for item in inputs: 
+            for item in inputs:
                 inputs_gpu.append(xr.DataArray(xp.asarray(item.data)))
         elif da.Array in in_types:
-            for item in inputs: 
+            for item in inputs:
                 inputs_gpu.append(xr.DataArray(item.data.map_blocks(xp.asarray)))
+    elif da.Array in in_types:
+        for item in inputs:
+            inputs_gpu.append(item.map_blocks(xp.asarray))
+    else: 
+        return inputs
     return inputs_gpu
 
 def _convert_to_cpu_array(inputs):
     cp = _import_cupy()
-    inputs_gpu = []
+    inputs_cpu = []
     in_types = [type(item) for item in inputs]
     #convert the numpy to cupy
     if cp.ndarray in in_types:
-        for item in inputs: 
-            inputs_gpu.append(cp.asnumpy(item))
+        for item in inputs:
+            inputs_cpu.append(cp.asnumpy(item))
     #convert the xarray
     elif xr.DataArray in in_types:
         in_types = [type(item.data) for item in inputs]
         if cp.ndarray in in_types:
-            for item in inputs: 
-                inputs_gpu.append(xr.DataArray(cp.asnumpy(item.data)))
+            for item in inputs:
+                inputs_cpu.append(xr.DataArray(cp.asnumpy(item.data)))
         elif da.Array in in_types:
-            for item in inputs: 
-                inputs_gpu.append(xr.DataArray(item.data.map_blocks(cp.asnumpy)))
-    return inputs_gpu
+            for item in inputs:
+                inputs_cpu.append(xr.DataArray(item.data.map_blocks(cp.asnumpy)))
+    elif da.Array in in_types:
+        for item in inputs:
+            inputs_cpu.append(item.map_blocks(cp.asnumpy))
+    else: 
+        return inputs
+    return inputs_cpu
