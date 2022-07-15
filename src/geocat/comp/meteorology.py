@@ -3,7 +3,7 @@ import numpy as np
 import typing
 import xarray as xr
 import warnings
-from .comp_util import _import_cupy, _convert_to_gpu_array
+from .comp_util import _import_cupy, _convert_to_gpu_array, _convert_to_cpu_array
 
 
 def _dewtemp(
@@ -47,6 +47,7 @@ def _dewtemp(
 
     lhv = (597.3 - 0.57 * (tk - 273)) / gcx
     tdk = tk * lhv / (lhv - tk * np.log(rh * 0.01))
+    print(type(tdk))
 
     return tdk
 
@@ -88,6 +89,12 @@ def _heat_index(temperature: np.ndarray,
     Related NCL Functions:
     `heat_index_nws <https://www.ncl.ucar.edu/Document/Functions/Contributed/heat_index_nws.shtml>`_
     """
+    xp = np
+    if (use_gpu):
+        xp = _import_cupy()
+        temperature, relative_humidity = _convert_to_gpu_array(
+            [temperature, relative_humidity])
+
     # Default coefficients for (t>=80F) and (40<gh<100)
     coeffs = [
         -42.379, 2.04901523, 10.14333127, -0.22475541, -0.00683783, -0.05481717,
@@ -171,6 +178,8 @@ def _nws_eqn(coeffs, temp, rel_hum, use_gpu: bool = False):
     Related NCL Functions:
     `heat_index_nws <https://www.ncl.ucar.edu/Document/Functions/Contributed/heat_index_nws.shtml>`_,
     """
+    if (use_gpu):
+        temp, rel_hum = _convert_to_gpu_array([temp, rel_hum])
 
     heatindex = coeffs[0] \
                 + coeffs[1] * temp \
@@ -456,6 +465,12 @@ def _xheat_index(temperature: xr.DataArray,
     Related NCL Functions:
     `heat_index_nws <https://www.ncl.ucar.edu/Document/Functions/Contributed/heat_index_nws.shtml>`_,
     """
+    xp = np
+    if (use_gpu):
+        xp = _import_cupy()
+        temperature, relative_humidity = _convert_to_gpu_array(
+            [temperature, relative_humidity])
+
     # Default coefficients for (t>=80F) and (40<gh<100)
     coeffs = [
         -42.379, 2.04901523, 10.14333127, -0.22475541, -0.00683783, -0.05481717,

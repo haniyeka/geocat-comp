@@ -64,13 +64,12 @@ class Test_dewtemp(unittest.TestCase):
 
         assert np.allclose(dewtemp(tk, rh, use_gpu) - 273.15, self.dt_2, 0.1)
 
-    def test_dims_error(self, use_gpu=False):
-        self.assertRaises(ValueError, dewtemp, self.t_def[:10], self.rh_def[:8],
-                          use_gpu)
+    def test_dims_error(self):
+        self.assertRaises(ValueError, dewtemp, self.t_def[:10], self.rh_def[:8])
 
-    def test_xarray_type_error(self, use_gpu=False):
+    def test_xarray_type_error(self):
         self.assertRaises(TypeError, dewtemp, self.t_def,
-                          xr.DataArray(self.rh_def), use_gpu)
+                          xr.DataArray(self.rh_def))
 
     def test_dask_compute(self, use_gpu=False):
         tk = xr.DataArray(np.asarray(self.t_def) + 273.15).chunk(6)
@@ -132,9 +131,8 @@ class Test_heat_index(unittest.TestCase):
 
     def test_xarray_alt_coef(self, use_gpu=False):
         assert np.allclose(heat_index(xr.DataArray(self.t2),
-                                      xr.DataArray(self.rh2),
-                                      True,
-                                      use_gpu=use_gpu),
+                                      xr.DataArray(self.rh2), True,
+                                      use_gpu).data,
                            self.ncl_gt_2,
                            atol=0.005)
 
@@ -152,7 +150,7 @@ class Test_heat_index(unittest.TestCase):
         t = xr.DataArray(self.t1)
         rh = xr.DataArray(self.rh1)
 
-        assert np.allclose(heat_index(t, rh, use_gpu=use_gpu),
+        assert np.allclose(heat_index(t, rh, use_gpu=use_gpu).data,
                            self.ncl_gt_1,
                            atol=0.005)
 
@@ -164,46 +162,30 @@ class Test_heat_index(unittest.TestCase):
         assert out.tag == "NCL: heat_index_nws; (Steadman+t)*0.5"
 
     def test_rh_warning(self, use_gpu=False):
-        self.assertWarns(UserWarning,
-                         heat_index, [50, 80, 90], [0.1, 0.2, 0.5],
-                         use_gpu=use_gpu)
+        self.assertWarns(UserWarning, heat_index, [50, 80, 90], [0.1, 0.2, 0.5])
 
     def test_rh_valid(self, use_gpu=False):
-        self.assertRaises(ValueError,
-                          heat_index, [50, 80, 90], [-1, 101, 50],
-                          use_gpu=use_gpu)
+        self.assertRaises(ValueError, heat_index, [50, 80, 90], [-1, 101, 50])
 
     def test_xarray_rh_warning(self, use_gpu=False):
-        self.assertWarns(UserWarning,
-                         heat_index, [50, 80, 90], [0.1, 0.2, 0.5],
-                         use_gpu=use_gpu)
+        self.assertWarns(UserWarning, heat_index, [50, 80, 90], [0.1, 0.2, 0.5])
 
-    def test_xarray_rh_valid(self, use_gpu=False):
-        self.assertRaises(ValueError,
-                          heat_index,
-                          xr.DataArray([50, 80, 90]),
-                          xr.DataArray([-1, 101, 50]),
-                          use_gpu=use_gpu)
+    def test_xarray_rh_valid(self):
+        self.assertRaises(ValueError, heat_index, xr.DataArray([50, 80, 90]),
+                          xr.DataArray([-1, 101, 50]))
 
-    def test_xarray_type_error(self, use_gpu=False):
-        self.assertRaises(TypeError,
-                          heat_index,
-                          self.t1,
-                          xr.DataArray(self.rh1),
-                          use_gpu=use_gpu)
+    def test_xarray_type_error(self):
+        self.assertRaises(TypeError, heat_index, self.t1,
+                          xr.DataArray(self.rh1))
 
-    def test_dims_error(self, use_gpu=False):
-        self.assertRaises(ValueError,
-                          heat_index,
-                          self.t1[:10],
-                          self.rh1[:8],
-                          use_gpu=use_gpu)
+    def test_dims_error(self):
+        self.assertRaises(ValueError, heat_index, self.t1[:10], self.rh1[:8])
 
     def test_dask_compute(self, use_gpu=False):
         t = xr.DataArray(self.t1).chunk(3)
         rh = xr.DataArray(self.rh1).chunk(3)
 
-        assert np.allclose(heat_index(t, rh, use_gpu=use_gpu),
+        assert np.allclose(heat_index(t, rh, use_gpu=use_gpu).data,
                            self.ncl_gt_1,
                            atol=0.005)
 
@@ -271,13 +253,13 @@ class Test_relhum(unittest.TestCase):
 
         assert np.allclose(relhum(t, q, p, use_gpu), self.rh_gt_2, atol=0.1)
 
-    def test_dims_error(self, use_gpu=False):
+    def test_dims_error(self):
         self.assertRaises(ValueError, relhum, self.t_def[:10], self.q_def[:10],
-                          self.p_def[:9], use_gpu)
+                          self.p_def[:9])
 
-    def test_xarray_type_error(self, use_gpu=False):
+    def test_xarray_type_error(self):
         self.assertRaises(TypeError, relhum, self.t_def,
-                          xr.DataArray(self.q_def), self.p_def, use_gpu)
+                          xr.DataArray(self.q_def), self.p_def)
 
     def test_dask_compute(self, use_gpu=False):
         p = xr.DataArray(self.p_def).chunk(10)
